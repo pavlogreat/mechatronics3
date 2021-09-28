@@ -8,4 +8,6 @@ Simple mobile robot based on Arduino, Python, pyFirmata and scikit-learn
 3. Створити програму для ідентифікації роботом об'єкта (білий куб з ребром 10 см). За основу можна взяти цей приклад і створити його "Fork".
 4. Повідомити про бажання взяти участь в змаганнях на пошту vkopey@gmail.com до 14.11.2021р.
 
+Відео:
+
 [![Simple mobile robot](https://img.youtube.com/vi/v-3aYALHgrE/0.jpg)](https://www.youtube.com/watch?v=v-3aYALHgrE)
