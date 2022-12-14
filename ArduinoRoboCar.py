@@ -79,11 +79,11 @@ def stop(t=0):
     pin11.write(0)
     if t: time.sleep(t)
 
-def RF(t):
+def RF(t, s=True):
     pin10.write(0)
     pin11.write(1)
     time.sleep(t)
-    stop()
+    if s: stop()
 
 def RB(t):
     pin10.write(1)
@@ -104,13 +104,13 @@ def LB(t):
     stop()
 
 def F(t):
-    RF(0.1)
+    RF(0.1, False)
     LF(t)
     stop()
 
 def B(t):
     RB(0.1)
-    LB(t) 
+    LB(t)
     stop()
 
 # деякі дані для навчання - об'єкт шириною 10 см, висотою 10 см  
@@ -158,7 +158,7 @@ while True:
     H,V,D=scan3D()
     p=model.predict(np.array(D).reshape(1,-1))[0] # клас: 1 - є об'єкт, 0 - немає
     if p: # якщо об'єкт ідентифіковано
-        break # то закінчити
+        F(5) # штовхати!
     else:
         # інакше рухатись випадково
         direction=random.choice([F,LF,RF])
