@@ -10,7 +10,7 @@ Simple mobile robot based on Arduino, Python, pyFirmata and scikit-learn
 
 Пов'язаний проект:
 
-[Симуляція змагання роботів за допомогою Pymunk і Nodebox for OpenGL.](https://github.com/vkopey/Pymunk_Nodebox_Examples) Див. приклади 8.x.py
+[Симуляція змагання роботів за допомогою Pymunk і Nodebox for OpenGL.](https://github.com/vkopey/Pymunk_Nodebox_Examples) Див. приклади 8_x.py
 
 Відео:
 
