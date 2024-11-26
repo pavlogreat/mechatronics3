@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Robot Competition Code</title>
+  <style>
+      body {
+          font-family: Arial, sans-serif;
+          line-height: 1.6;
+          margin: 20px;
+          background-color: #f4f4f4;
+      }
+      h1, h2 {
+          color: #333;
+      }
+      pre {
+          background-color: #eee;
+          padding: 10px;
+          border-radius: 5px;
+          overflow-x: auto;
+      }
+      code {
+          font-family: monospace;
+          color: #d63384;
+      }
+      .section {
+          margin-bottom: 40px;
+      }
+  </style>
+</head>
+<body>
+
+<h1>Robot Competition Code</h1>
+
+<div class="section">
+  <h2>1. Arduino Control with Machine Learning</h2>
+  <pre><code>
+# -*- coding: utf-8 -*-
+from pyfirmata import Arduino, util
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import GradientBoostingClassifier
+import random
+import time
+
+# Initialize Arduino board
+board = Arduino('COM25')
+it = util.Iterator(board)
+it.start()
+board.analog[0].enable_reporting()
+
+# Define pins
+pin8 = board.get_pin('d:8:o')
+pin9 = board.get_pin('d:9:o')
+pin10 = board.get_pin('d:10:o')
+pin11 = board.get_pin('d:11:o')
+servo1 = board.get_pin('d:5:s')
+servo2 = board.get_pin('d:6:s')
+echo_pin = board.get_pin('d:7:o')
+
+def ping(n):
+  "Returns the average distance measured by the ultrasonic sensor."
+  return sum([util.ping_time_to_distance(echo_pin.ping()) for i in range(n)]) / n
+
+def scan():
+  angle = 0
+  X = []
+  Y = []
+  while angle <= 130:
+      servo1.write(angle)
+      time.sleep(1)
+      dist = ping(3)
+      X.append(angle)
+      Y.append(dist)
+      print(board.analog[0].read())
+      angle += 13
+  return X, Y
+
+# Training data for the model
+x = np.array([
+  [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+  [0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+  [0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+  [0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0],
+  [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1],
+  [0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  [0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+])
+y = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+
+# Train the model
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.1)
+model = GradientBoostingClassifier(n_estimators=10, learning_rate=0.1, max_depth=3)
+model.fit(x_train, y_train)
+
+# Predictions and accuracy
+print("Actual test classes:", y_test)
+print("Predicted test classes:", model.predict(x_test))
+print("Model accuracy:", model.score(x_test, y_test))
+</code></pre>
+</div>
+
+<div class="section">
+  <h2>2. Robot Navigation and Control</h2>
+  <pre><code>
+# -*- coding: utf-8 -*-
+from pyfirmata import Arduino, util
+import numpy as np
+import urllib2
+import random
+import time
+
+# Initialize Arduino board
+board = Arduino('COM14', baudrate=57600)
+it = util.Iterator(board)
+it.start()
+board.analog[0].enable_reporting()
+
+# Define pins
+pin8 = board.get_pin('d:8:o')
+pin9 = board.get_pin('d:9:o')
+pin10 = board.get_pin('d:10:o')
+pin11 = board.get_pin('d:11:o')
+servo1 = board.get_pin('d:5:s')
+servo2 = board.get_pin('d:6:s')
+echo_pin = board.get_pin('d:7:o')
+
+def ping(n):
+  "Returns the average distance measured by the ultrasonic sensor."
+  return sum([util.ping_time_to_distance(echo_pin.ping()) for i in range(n)]) / n
+
+def getXY():
+  response = urllib2.urlopen('http://192.168.0.101/')
+  data = response.read()
+  response.close()
+  if not data:
+      time.sleep(2)
+      return None
+  x1, y1, x2, y2 = [int(x) for x in data.split()]
+  return x1, y1, x2, y2
+
+# Main loop for navigation...
+while True:
+  data = getXY()
+  if not data: continue
+  x1, y1, x2, y2 = data
+  # Implement navigation logic based on coordinates...
+</code></pre>
+</div>
+
+<div class="section">
+  <h2>3. Color Detection with OpenCV</h2>
+  <pre><code>
+# -*- coding: utf-8 -*-
+from bottle import route, run, request, WSGIRefServer
+import numpy as np
+import cv2
+
+def detectColor(h1, s1, v1, h2, s2, v2):
+  h_min = np.array((h1, s1, v1), np.uint8)
+  h_max = np.array((h2, s2, v2), np.uint8)
+  RealTimeMask = cv2.inRange(frame_hsv, h_min, h_max)
+  moments = cv2.moments(RealTimeMask, 1)
+  dM01 = moments['m01']
+  dM10 = moments['m10']
+  Area = moments['m00']
+  if Area:
+      x = int(dM10 / Area)
+      y = int(dM01 / Area)
+      cv2.circle(frame, (x, y), 10, (0, 0, 255), -1)
+      return x, y, RealTimeMask
+  else:
+      return None, None, RealTimeMask
+
+cap = cv2.VideoCapture(0)
+
+@route('/')  # http://localhost:80
+def index():
+  return getXY()
+
+run(server=WSGIRefServer, host='192.168.0.101', port=80)
+cap.release()
+cv2.destroyAllWindows()
+</code></pre>
+</div>
+
+<div class="section">
+  <h2>4. File Upload and Execution</h2>
+  <pre><code>
+# -*- coding: utf-8 -*-
+from bottle import route, request, run
+import os
+
+@route('/')
+def form():
+  return """<form action="/upload" method="post" enctype="multipart/form-data">
+Password: <input type="password" name="password" />
+Select a file: <input type="file" name="upload" />
+<input type="submit" value="Start upload" />
+</form>"""
+
+@route('/upload', method='POST')
+def do_upload():
+  password = request.POST['password']
+  if password not in ['111', '222', '333']:
+      return 'incorrect password!'
+  upload = request.files.get('upload')
+  name, ext = os.path.splitext(upload.filename)
+  if ext not in ['.py']:
+      return 'File extension not allowed.'
+  upload.save("e://test.py")
+  import subprocess
+  p = subprocess.Popen('c:/python27/python.exe e:/test.py', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+  return p.stdout.read() + p.stderr.read()
+
+run(host='localhost', port=8080)
+</code></pre>
+</div>
+
+</body>
+</html>
